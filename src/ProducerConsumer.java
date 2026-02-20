@@ -1,42 +1,66 @@
-class SharedResource {
-    int item;
-    boolean available = false;
+class Buffer {
+    private int item;
+    private boolean available = false;
+    synchronized void produce(int value) {
+        while (available) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        item = value;
+        available = true;
+        System.out.println("Produced: " + item);
+        notify();
+    }
 
-    // TODO: synchronize void put(int item)
-    // while(available) -> wait()
-    // set this.item = item, available = true
-    // print "Produced: " + item
-    // notify()
-
-    // TODO: synchronize void get()
-    // while(!available) -> wait()
-    // print "Consumed: " + item
-    // available = false
-    // notify()
+    synchronized void consume() {
+        while (!available) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+            }
+        }
+        System.out.println("Consumed: " + item);
+        available = false;
+        notify();
+    }
 }
 
 class Producer extends Thread {
-    SharedResource resource;
-    // TODO: Constructor to init resource
-    
-    // TODO: run()
-    // Loop 1 to 5
-    // call resource.put(i)
+    Buffer buffer;
+
+    Producer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+
+    public void run() {
+        for (int i = 1; i <= 5; i++) {
+            buffer.produce(i);
+        }
+    }
 }
 
 class Consumer extends Thread {
-    SharedResource resource;
-    // TODO: Constructor to init resource
-    
-    // TODO: run()
-    // Loop 1 to 5
-    // call resource.get()
+    Buffer buffer;
+    Consumer(Buffer buffer) {
+        this.buffer = buffer;
+    }
+    public void run() {
+        for (int i = 1; i <= 5; i++) {
+            buffer.consume();
+        }
+    }
 }
 
 public class ProducerConsumer {
     public static void main(String[] args) {
-        // TODO: Create SharedResource object
-        // TODO: Create Producer and Consumer threads
-        // TODO: Start both threads
+        Buffer buffer = new Buffer();
+
+        Producer p = new Producer(buffer);
+        Consumer c = new Consumer(buffer);
+
+        p.start();
+        c.start();
     }
 }
